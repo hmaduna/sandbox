@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package simple_service;
+
+service SimpleService {
+  rpc Ping (SimpleRequest) returns (SimpleReply) {}
+}
+
+message SimpleRequest {
+}
+
+message SimpleReply {
+}
