@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.8)
-project(simple_server)
 
-#if(MSVC)
-#  add_definitions(-D_WIN32_WINNT=0x600)
-#endif()
+project(simple_service)
 
-#find_package(Threads REQUIRED)
+# find spdlog installation
+if(NOT TARGET spdlog)
+    find_package(spdlog REQUIRED)
+endif()
 
-# Find Protobuf installation
-# Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
+# find Protobuf installation
+# looks for protobuf-config.cmake file installed by Protobuf's cmake installation
 set(protobuf_MODULE_COMPATIBLE TRUE)
 find_package(Protobuf CONFIG REQUIRED)
 message(STATUS "Using protobuf ${Protobuf_VERSION}")
@@ -21,8 +21,8 @@ else()
   set(_PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
 endif()
 
-# Find gRPC installation
-# Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
+# find gRPC installation
+# looks for gRPCConfig.cmake file installed by gRPC's cmake installation
 find_package(gRPC CONFIG REQUIRED)
 message(STATUS "Using gRPC ${gRPC_VERSION}")
 
@@ -33,11 +33,11 @@ else()
   set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 endif()
 
-# Proto file
+# proto file
 get_filename_component(ss_proto "simple_service.proto" ABSOLUTE)
 get_filename_component(ss_proto_path "${ss_proto}" PATH)
 
-# Generated sources
+# generated sources
 set(ss_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/simple_service.pb.cc")
 set(ss_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/simple_service.pb.h")
 set(ss_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/simple_service.grpc.pb.cc")
@@ -52,10 +52,10 @@ add_custom_command(
         "${ss_proto}"
       DEPENDS "${ss_proto}")
 
-# Include generated *.pb.h files
+# include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
-# hw_grpc_proto
+# ss_grpc_proto
 add_library(ss_grpc_proto
   ${ss_grpc_srcs}
   ${ss_grpc_hdrs}
@@ -66,7 +66,7 @@ target_link_libraries(ss_grpc_proto
   ${_GRPC_GRPCPP}
   ${_PROTOBUF_LIBPROTOBUF})
 
-# Targets simple_(client|server)
+# targets simple_(client|server)
 foreach(_target
   simple_client simple_server)
   add_executable(${_target} "${_target}.cc")
@@ -74,6 +74,7 @@ foreach(_target
     ss_grpc_proto
     absl::flags
     absl::flags_parse
+    spdlog::spdlog
     ${_REFLECTION}
     ${_GRPC_GRPCPP}
     ${_PROTOBUF_LIBPROTOBUF})

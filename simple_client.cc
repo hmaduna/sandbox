@@ -7,8 +7,12 @@
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
+#include "absl/flags/usage.h"
+#include "absl/strings/str_cat.h"
 
 #include <grpcpp/grpcpp.h>
+
+#include "spdlog/spdlog.h"
 
 #include "simple_service.grpc.pb.h"
 
@@ -36,7 +40,7 @@ class SimpleClient {
     if (status.ok()) {
       return "OK";
     } else {
-      std::cout << status.error_code() << ": " << status.error_message() << std::endl;
+      spdlog::error("{}: {}", status.error_code(), status.error_message());
       return "RPC failed";
     }
   }
@@ -45,34 +49,17 @@ class SimpleClient {
   std::unique_ptr<SimpleService::Stub> stub_;
 };
 
-/*
-bool Validate_It(string address)
-{
-    // Regex expression for validating IPv4
-    regex ipv4("(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]):");
-
-    if (regex_match(address, ipv4)) {
-      return true;
-    }
-
-    return false;
-}
-*/
-
 int main(int argc, char** argv) {
+  absl::SetProgramUsageMessage(
+  absl::StrCat("Sample usage:\n", argv[0], " --target 10.20.30.40:1234"));
   absl::ParseCommandLine(argc, argv);
-
   std::string target_str = absl::GetFlag(FLAGS_target);
-  if (argc > 1) {
-    target_str = argv[1];
-    // TODO: validate argument
-  }
 
   SimpleClient client(grpc::CreateChannel(target_str, grpc::InsecureChannelCredentials()));
 
   for (;;) {
     std::string reply = client.Ping();
-    std::cout << "Client received: " << reply << std::endl;
+    spdlog::info("Client received: {}", reply);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 

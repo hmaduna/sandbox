@@ -4,11 +4,15 @@
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
+#include "absl/flags/usage.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+
+#include "spdlog/spdlog.h"
 
 #include "simple_service.grpc.pb.h"
 
@@ -25,7 +29,7 @@ ABSL_FLAG(uint16_t, port, 50051, "Server port for the service");
 class SimpleServiceImpl final : public SimpleService::Service {
   Status Ping(ServerContext* context, const SimpleRequest* request,
                   SimpleReply* reply) override {
-    std::cout << "Ping from client" << std::endl;;
+    spdlog::info("Ping from client");
     return Status::OK;
   }
 };
@@ -41,17 +45,18 @@ void RunServer(uint16_t port) {
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
   builder.RegisterService(&service);
   std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Server listening on " << server_address << std::endl;
+
+  spdlog::info("Server listening on {}", server_address);
 
   server->Wait();
 }
 
 int main(int argc, char** argv) {
+  absl::SetProgramUsageMessage(absl::StrCat("Sample usage:\n", argv[0], " --port 1234"));
   absl::ParseCommandLine(argc, argv);
   uint16_t port = absl::GetFlag(FLAGS_port);
-  if (argc > 1) {
-    port = std::stoi(argv[1]);
-  }
+
   RunServer(port);
+
   return 0;
 }
