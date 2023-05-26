@@ -1,6 +1,7 @@
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <regex>
 #include <string>
 #include <thread>
 
@@ -44,12 +45,27 @@ class SimpleClient {
   std::unique_ptr<SimpleService::Stub> stub_;
 };
 
+/*
+bool Validate_It(string address)
+{
+    // Regex expression for validating IPv4
+    regex ipv4("(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]):");
+
+    if (regex_match(address, ipv4)) {
+      return true;
+    }
+
+    return false;
+}
+*/
+
 int main(int argc, char** argv) {
   absl::ParseCommandLine(argc, argv);
 
   std::string target_str = absl::GetFlag(FLAGS_target);
   if (argc > 1) {
     target_str = argv[1];
+    // TODO: validate argument
   }
 
   SimpleClient client(grpc::CreateChannel(target_str, grpc::InsecureChannelCredentials()));
